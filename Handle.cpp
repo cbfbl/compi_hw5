@@ -11,6 +11,8 @@ bool areTypesEqual(string type1, string type2);
 void numCheck2(Scope& table, TypeContainer* con);
 TypeContainer* binOpType2(RegisterManager& reg_manager, TypeContainer* lhs,
                           TypeContainer* rhs);
+void enumTypeCheck2(Scope& table, TypeContainer* enumtype, TypeContainer* id,
+                    TypeContainer* exp);
 void notDefinedVariable2(Scope& table, TypeContainer* con);
 void typeCheck2(Scope& table, TypeContainer* lhs, TypeContainer* rhs);
 
@@ -322,6 +324,30 @@ void notDefined2(Scope& table, TypeContainer* con) {
       table.getDataCopy(con->getName()).isEnum()) {
     errorUndef(yylineno, con->getName());
     exit(0);
+  }
+}
+
+void enumTypeCheck2(Scope& table, TypeContainer* enumtype, TypeContainer* id,
+                    TypeContainer* exp) {
+  if (!table.exist(enumtype->getName())) {
+    errorUndefEnum(yylineno, enumtype->getName());
+    exit(0);
+    return;  // no enum
+  }
+  string exp_type = getActualType2(table, exp);
+  size_t space_pos = exp_type.find(" ");
+  if (space_pos != string::npos) {
+    if (exp_type.substr(space_pos + 1) != enumtype->getName()) {
+      errorUndefEnumValue(yylineno, id->getName());
+      exit(0);
+      return;  // unmatch enum
+    } else {
+      return;  // good
+    }
+  } else {
+    errorUndefEnumValue(yylineno, id->getName());
+    exit(0);
+    return;  // unmatch enum
   }
 }
 
