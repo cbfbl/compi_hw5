@@ -7,4 +7,7 @@ t*.*
 *.exe
 *.bs
 *.bb
+parser.tab.cpp
+parser.tab.hpp
+lex.yy.c
 /randomchecks
