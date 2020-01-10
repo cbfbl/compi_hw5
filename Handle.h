@@ -43,7 +43,10 @@ class Handler {
 
   void insertVariable();
 
-  void insertEnum();
+  void insertEnum(TypeContainer* enumtype, TypeContainer* id,
+                  TypeContainer* exp);
+
+  void assignWithoutDecl(TypeContainer* id, TypeContainer* exp);
 
   TypeContainer* functionCall(TypeContainer* func_id, TypeContainer* exp_list);
 

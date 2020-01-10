@@ -11,6 +11,8 @@ bool areTypesEqual(string type1, string type2);
 void numCheck2(Scope& table, TypeContainer* con);
 TypeContainer* binOpType2(RegisterManager& reg_manager, TypeContainer* lhs,
                           TypeContainer* rhs);
+void notDefinedVariable2(Scope& table, TypeContainer* con);
+void typeCheck2(Scope& table, TypeContainer* lhs, TypeContainer* rhs);
 
 Handler::Handler(Scope& parser_table)
     : table(parser_table), last_function_ret_type(""), is_main_defined(false) {}
@@ -101,7 +103,17 @@ TypeContainer* Handler::enumratorList(TypeContainer* enum_list,
 
 void Handler::insertVariable() {}
 
-void Handler::insertEnum() {}
+void Handler::insertEnum(TypeContainer* enumtype, TypeContainer* id,
+                         TypeContainer* exp) {
+  enumTypeCheck2(table, enumtype, id, exp);
+  table.addScopeData(ScopeData(id->getName(), table.getNextOffset(),
+                               "enum " + enumtype->getName()));
+}
+
+void Handler::assignWithoutDecl(TypeContainer* id, TypeContainer* exp) {
+  notDefinedVariable2(table, id);
+  typeCheck2(table, id, exp);
+}
 
 TypeContainer* Handler::functionCall(TypeContainer* func_id,
                                      TypeContainer* exp_list) {
@@ -311,4 +323,30 @@ void notDefined2(Scope& table, TypeContainer* con) {
     errorUndef(yylineno, con->getName());
     exit(0);
   }
+}
+
+void notDefinedVariable2(Scope& table, TypeContainer* con) {
+  if (table.exist(con->getName()) == false ||
+      table.getDataCopy(con->getName()).isEnum()) {
+    errorUndef(yylineno, con->getName());
+    exit(0);
+  }
+  if (table.getDataCopy(con->getName()).isFunction()) {
+    errorUndef(yylineno, con->getName());
+    exit(0);
+  }
+}
+
+void typeCheck2(Scope& table, TypeContainer* lhs, TypeContainer* rhs) {
+  string type_lhs = getActualType2(table, lhs);
+  string type_rhs = getActualType2(table, rhs);
+  if (type_lhs == type_rhs || type_lhs == "INT" && type_rhs == "BYTE") {
+    return;
+  }
+  if (type_lhs.find(" ") != string::npos) {
+    errorUndefEnumValue(yylineno, lhs->getName());
+    exit(0);
+  }
+  errorMismatch(yylineno);
+  exit(0);
 }

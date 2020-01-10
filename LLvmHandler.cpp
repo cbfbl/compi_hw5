@@ -51,7 +51,7 @@ void LLvmHandler::printFunctionsDefinitions() {
   command +=
       "\tcall i32 (i8*, ...) printf(i8* getelementptr([4 x i8], [4 x i8]* "
       "@.int_specifier, i32 0, i32 0), i32 %0)\n";
-  command += "\tret void\n}";
+  command += "\tret void\n}\n";
   command += "define void @print(i8*) {\n";
   command +=
       "\tcall i32 (i8*, ...) printf(i8* getelementptr([4 x i8], [4 x i8]* "

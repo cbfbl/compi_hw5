@@ -88,6 +88,8 @@ FuncDecl : RetType {
         
     } Statements RBRACE  {
 	handler.finishInsertFunction();
+    //endScope();
+    //table.printLastScopeData();
     table.removeScope();
 };
 Enums : /*epsilon*/																		{};
@@ -154,6 +156,8 @@ Enumerator : ID	{
 Statements : Statement																{};
 Statements : Statements Statement											{};
 Statement : LBRACE {table.insertScope();} Statements RBRACE {
+    //endScope();
+    //table.printLastScopeData();
     table.removeScope();
 };
 Statement : Type ID {
@@ -184,11 +188,12 @@ Statement : EnumType ID {wasAlreadyDefined($2);} ASSIGN Exp {
     if ($5->getType()=="ID"){
       notDefined($5);
     }
-    enumTypeCheck($1,$2,$5);
-    table.addScopeData(ScopeData($2->getName(),table.getNextOffset(),"enum "+$1->getName()));
+    handler.insertEnum($1,$2,$5);
     } SC {
 };
-Statement : ID ASSIGN Exp SC {notDefinedVariable($1); typeCheck($1,$3);};
+Statement : ID ASSIGN Exp SC {
+    handler.assignWithoutDecl($1,$3);
+};
 Statement : Call SC																		{};
 Statement : RETURN SC 	{
     handler.returnStatement(NULL);
@@ -204,12 +209,16 @@ Statement : WHILE LPAREN CheckType RPAREN {
     table.insertScope();
     } Statement {
         while_count--;
+        //endScope();
+        //table.printLastScopeData();
         table.removeScope();
 };
 InsertScope : {
   table.insertScope();}
 RemoveScope : {
-  table.removeScope();
+    //endScope();
+    //table.printLastScopeData();
+    table.removeScope();
 }
 CheckType : Exp {isBool($1);};
 Statement : BREAK SC  {
@@ -297,6 +306,8 @@ Exp : LPAREN Type {
 int main()
 {
 	yyparse();
+    //endScope();
+    //table.printLastScopeData();
     handler.flushCode();
 }
 
