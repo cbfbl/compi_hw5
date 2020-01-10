@@ -1,0 +1,546 @@
+%{
+	#include <iostream>
+	#include <stdlib.h>
+	#include "source.hpp"
+	#include "hw3_output.hpp"
+	#include "Scope.h"
+    #include "Handle.h"
+    #include "bp.hpp"
+
+	using namespace output;
+
+  int yylex();
+  extern int yylineno;
+  extern char* yytext;
+  extern void discoveringYYSTYPE(int yy);
+  TypeContainer* binOpType(TypeContainer* lhs, TypeContainer* rhs);
+  void typeCheck(TypeContainer* lhs,TypeContainer* rhs);
+  void isBool(TypeContainer* con);
+  void wasAlreadyDefined(TypeContainer* con);
+  void notDefined(TypeContainer* con);
+  void CheckDefinedFunc(TypeContainer* con);
+  void insertToSymbolTable(TypeContainer* type,TypeContainer* id);
+  string getActualType(TypeContainer* some_data);
+  int yyerror(const char * message);
+  string getRetType(ScopeData some_func);
+  void numCheck(TypeContainer* data);
+  string getFunctionParametersString(string id);
+  vector<string> parseFuncParams(string id);
+  string StringFromVec(vector<string> params);
+  vector<string> functionTypeToVector(string function_type);
+  string getFunctionFullType(string id);
+  vector<string> getFunctionParameters(string id);
+  void enumTypeCheck(TypeContainer* enumtype,TypeContainer* future_id,TypeContainer* exp);
+  vector<ScopeData> createFuncArgsVec(TypeContainer* formals);
+  string getRetType(string type);
+  string getFunctionRetTypeString(string id);
+  string getFunctionRetType(TypeContainer* func);
+  void notDefinedVariable(TypeContainer* con);
+  Scope table;
+  Handler handler(table);
+  CodeBuffer& code_buffer = CodeBuffer::instance();
+  int while_count = 0;
+  string last_function_ret_type = "VOID";
+  bool is_main_defined = false;
+
+%}
+
+%token BOOL
+%token VOID INT BYTE B ENUM TRUE FALSE RETURN WHILE IF
+%token BREAK CONTINUE SC COMMA LPAREN RPAREN LBRACE RBRACE
+%token  ID NUM STRING
+%right ASSIGN
+%left OR
+%left AND
+%left RELEQ
+%nonassoc RELOP
+%left BINOPL
+%left BINOPH
+%right CAST
+%right NOT
+%nonassoc THEN
+%nonassoc ELSE
+
+
+%%
+Program	: {
+	handler.programStart();
+  }
+	Enums Funcs {
+        handler.mainDefined();
+    };
+Funcs : /*epsilon*/ 																									{};
+Funcs : FuncDecl Funcs 																								{};
+FuncDecl : RetType {
+    handler.updateLastFunctionRetType($1);
+    } ID {
+    wasAlreadyDefined($3);
+    if ($3->getName()=="main"){
+        handler.defineMain();
+    }
+    } LPAREN Formals RPAREN LBRACE {
+      vector<string> formals_ids = ((FormalListClass*)$6)->getNames();
+      if (std::find(formals_ids.begin(),formals_ids.end(),$3->getName())!=formals_ids.end()){
+        errorDef(yylineno,$3->getName());
+        exit(0);
+      }
+        handler.createAndInsertFunction($1,$3,$6);
+        
+    } Statements RBRACE  {
+	handler.finishInsertFunction();
+    table.removeScope();
+};
+Enums : /*epsilon*/																		{};
+Enums : EnumDecl {
+  vector<string> names = ((FormalListClass*)$1)->getNames();
+  table.insertGlobalEnum($1->getName());
+} Enums			{};
+EnumDecl : ENUM ID {
+	wasAlreadyDefined($2);
+} LBRACE EnumeratorList RBRACE SC   {
+    vector<string> enum_names = ((FormalListClass*)$5)->getNames();
+    if (std::find(enum_names.begin(),enum_names.end(),$2->getName())!=enum_names.end()){
+      errorDef(yylineno,$2->getName());
+      exit(0);
+    }
+    $$ = handler.enumDeclaration($2,$5);
+};
+RetType : Type																				{$$=$1;};
+RetType : VOID																				{$$=$1;};
+Formals : /*epsilon*/																	{$$ = new FormalListClass();};
+Formals : FormalsList																	{$$=$1;};
+FormalsList : FormalDecl															{$$=$1;};
+FormalsList : FormalDecl COMMA FormalsList {
+  vector<string> vec1 = ((FormalListClass*)$1)->getNames();
+  vector<string> vec2 = ((FormalListClass*)$3)->getNames();
+  string formal_id = vec1[0];
+  if (std::find(vec2.begin(),vec2.end(),formal_id)!=vec2.end()){
+    errorDef(yylineno,formal_id);
+    exit(0);
+  }
+  $$ = handler.formalList($1,$3);
+  };
+FormalDecl : Type ID  {
+  wasAlreadyDefined($2);
+  $$=new FormalListClass(Id($2->getName(),$1->getType()));
+};
+FormalDecl : EnumType ID  {
+  if(!table.exist($1->getName())){
+    errorUndefEnum(yylineno,$1->getName());
+    exit(0);
+  }
+  wasAlreadyDefined($2);
+  $$=new FormalListClass(Id($2->getName(),"enum "+$1->getName()));
+};
+EnumeratorList : Enumerator														{$$=$1;};
+EnumeratorList : EnumeratorList COMMA Enumerator	{
+    vector<string> vec1 = ((FormalListClass*)$1)->getNames();
+    vector<string> vec2 = ((FormalListClass*)$3)->getNames();
+    string enumrator_id = vec2[0];
+    if (table.exist(enumrator_id)){
+      errorDef(yylineno,enumrator_id);
+      exit(0);
+    }
+    if (std::find(vec1.begin(),vec1.end(),enumrator_id)!=vec1.end()){
+      errorDef(yylineno,enumrator_id);
+      exit(0);
+    }
+    $$ = handler.enumratorList($1,$3);
+};
+Enumerator : ID	{
+	wasAlreadyDefined($1);
+	$$=new FormalListClass(Id($1->getName(),$1->getType()));
+};
+Statements : Statement																{};
+Statements : Statements Statement											{};
+Statement : LBRACE {table.insertScope();} Statements RBRACE {
+    table.removeScope();
+};
+Statement : Type ID {
+    wasAlreadyDefined($2);
+    insertToSymbolTable($1,$2);
+    } SC {
+};
+Statement : EnumType ID {
+  if (!table.exist($1->getName())){
+    errorUndefEnum(yylineno,$1->getName());
+    exit(0);
+  }
+    wasAlreadyDefined($2);
+    table.addScopeData(ScopeData($2->getName(),table.getNextOffset(),"enum "+$1->getName()));}
+    SC	{};
+Statement : EnumDecl {
+  ;};
+Statement : Type ID {
+	wasAlreadyDefined($2);
+} ASSIGN Exp SC	{
+  if($5->getType() == "ID"){
+    notDefined($5);
+  }
+	typeCheck($1,$5);
+  insertToSymbolTable($1,$2);
+	};
+Statement : EnumType ID {wasAlreadyDefined($2);} ASSIGN Exp {
+    if ($5->getType()=="ID"){
+      notDefined($5);
+    }
+    enumTypeCheck($1,$2,$5);
+    table.addScopeData(ScopeData($2->getName(),table.getNextOffset(),"enum "+$1->getName()));
+    } SC {
+};
+Statement : ID ASSIGN Exp SC {notDefinedVariable($1); typeCheck($1,$3);};
+Statement : Call SC																		{};
+Statement : RETURN SC 	{
+    handler.returnStatement(NULL);
+};
+Statement : RETURN Exp {
+    handler.returnStatement($2);
+} SC	
+Statement : IF LPAREN CheckType RPAREN InsertScope
+    Statement %prec THEN RemoveScope
+Statement : IF LPAREN CheckType RPAREN InsertScope Statement RemoveScope ELSE InsertScope Statement RemoveScope
+Statement : WHILE LPAREN CheckType RPAREN {
+    while_count++;
+    table.insertScope();
+    } Statement {
+        while_count--;
+        table.removeScope();
+};
+InsertScope : {
+  table.insertScope();}
+RemoveScope : {
+  table.removeScope();
+}
+CheckType : Exp {isBool($1);};
+Statement : BREAK SC  {
+    if (while_count==0){
+        errorUnexpectedBreak(yylineno);
+        exit(0);
+    }
+};
+Statement : CONTINUE SC	{
+    if(while_count==0){
+        errorUnexpectedContinue(yylineno);
+        exit(0);
+    }
+};
+Call : CheckFunc LPAREN ExpList RPAREN  {
+	CheckDefinedFunc($1);
+  $$ = handler.functionCall($1,$3);
+};
+Call : CheckFunc LPAREN RPAREN {
+	CheckDefinedFunc($1);
+  $$ = handler.functionCallNoParams($1);
+};
+CheckFunc : ID {
+};
+ExpList : Exp																					{$$=new ExpList(getActualType($1));};
+ExpList : Exp COMMA ExpList														{$$=new ExpList(getActualType($1));$$->addTypes($3->getTypes());};
+Type : INT																						{$$=handler.typeInt($1);};
+Type : BYTE																						{$$=handler.typeByte($1);};
+Type : BOOL																						{$$=handler.typeBool($1);};
+EnumType : ENUM ID																		{$$=new Enum($2->getName(),"ENUM");};
+Exp : LPAREN Exp RPAREN																{$$=$2;};
+Exp : Exp BINOPH Exp {
+    $$ = handler.expBinopH($2,$1,$3);
+};
+Exp : Exp BINOPL Exp {
+    $$ = handler.expBinopL($2,$1,$3);
+};
+Exp : ID																							{$$=handler.expId($1);};
+Exp : Call																						{$$=$1;};
+Exp : NUM																							{$$=handler.expNum($1);};
+Exp : NUM B		{
+    if ($1->getVal()>255){
+        errorByteTooLarge(yylineno,std::to_string($1->getVal()));
+        exit(0);
+    }
+    $$=new Byte($1->getVal(),"BYTE");
+};
+Exp : STRING																					{$$=$1;};
+Exp : TRUE																						{$$=$1;};
+Exp : FALSE																						{$$=$1;};
+Exp : NOT Exp {
+    isBool($2);
+    $$=new Bool(!(((Bool*)$2)->getValue()),"BOOL");
+};
+Exp : Exp AND Exp {
+	isBool($1);
+	isBool($3);
+	$$=new Bool($1->getValue() && $3->getValue(),"BOOL");
+};
+Exp : Exp OR Exp {
+	isBool($1);
+	isBool($3);
+	$$=new Bool($1->getValue() || $3->getValue(),"BOOL");
+};
+Exp : Exp RELOP Exp  {
+    $$ = handler.expRelop($1,$3);
+};
+Exp : Exp RELEQ Exp{
+    $$ = handler.expReleq($1,$3);
+};
+Exp : LPAREN Type {
+    if($2->getType()!="INT"){
+        errorMismatch(yylineno);
+        exit(0);
+    } } RPAREN Exp %prec CAST {
+      if (getActualType($5).find("enum")==std::string::npos && getActualType($5)!="ENUM"){
+            errorMismatch(yylineno);
+            exit(0);
+        }
+        $$=$2;
+};
+
+%%
+
+int main()
+{
+	yyparse();
+    handler.flushCode();
+}
+
+int yyerror(const char * message)
+{
+	output::errorSyn(yylineno);
+	exit(0);
+}
+
+
+TypeContainer* binOpType(TypeContainer* lhs, TypeContainer* rhs) {
+  string type_one = lhs->getType();
+  string type_two = rhs->getType();
+  if (type_one == "INT" || type_two == "INT"){
+	  return new Int(lhs->getVal()+rhs->getVal(),"INT");
+  }
+  return new Int(lhs->getVal() + rhs->getVal(), "BYTE");
+}
+
+void typeCheck(TypeContainer* lhs,TypeContainer* rhs){
+    string lhs_type = getActualType(lhs);
+    string rhs_type = getActualType(rhs);
+
+    if(lhs_type == "INT" && rhs_type =="BYTE") return;
+    if (lhs_type.find("enum")!=std::string::npos){
+      if (rhs_type=="ENUM"){
+        lhs_type = lhs_type.substr(lhs_type.find(" ")+1);
+        rhs_type = table.getParentEnumId(rhs->getName());
+        if (lhs_type!=rhs_type){
+          errorUndefEnumValue(yylineno,lhs->getName());
+          exit(0);
+        }
+        else {
+          return;
+        }
+      }
+      else {
+        errorUndefEnumValue(yylineno,lhs->getName());
+        exit(0);
+      }
+    }
+    if(lhs_type != rhs_type){
+      errorMismatch(yylineno);
+      exit(0);
+	}
+}
+
+void isBool(TypeContainer* con){
+    string type = getActualType(con);
+		if (type != "BOOL"){
+			errorMismatch(yylineno);
+			exit(0);
+		}
+ }
+
+void wasAlreadyDefined(TypeContainer* con){
+	if( table.exist( con->getName() )){
+		errorDef(yylineno, con->getName());
+		exit(0);
+	}
+}
+
+
+void notDefinedVariable(TypeContainer* con){
+	 if( table.exist( con->getName() ) == false || table.getDataCopy(con->getName()).isEnum()){
+      errorUndef(yylineno, con->getName());
+      exit(0);
+	}
+    if (table.getDataCopy(con->getName()).isFunction()){
+        errorUndef(yylineno, con->getName());
+        exit(0); 
+    }
+}
+
+void notDefined(TypeContainer* con){
+	 if( table.exist( con->getName() ) == false || table.getDataCopy(con->getName()).isEnum()){
+      errorUndef(yylineno, con->getName());
+      exit(0);
+	}
+}
+
+void CheckDefinedFunc(TypeContainer* con){
+	 string arrow = "->";
+     bool id_exists = table.exist(con->getName());
+     if (!id_exists){
+         errorUndefFunc(yylineno,con->getName());
+         exit(0);
+     }
+     ScopeData copy = table.getDataCopy(con->getName());
+     string type = copy.getTypeCopy();
+     if (type.find(arrow)==std::string::npos){
+         errorUndefFunc(yylineno,con->getName());
+         exit(0);
+     }
+}
+
+
+string getFunctionRetType(TypeContainer* func){
+    string type = func->getType();
+    if (type=="ID"){
+		notDefined(func);
+        type = table.getDataCopy(func->getName()).getTypeCopy();
+        std::size_t location = type.find("->");
+        if (location == std::string::npos){
+            return type;
+        }
+        type = type.substr(location+2);
+    }
+    return type;
+}
+
+void insertToSymbolTable(TypeContainer* type,TypeContainer* id){
+	ScopeData inserted_element = ScopeData(id->getName(),table.getNextOffset(),type->getType());
+	table.addScopeData(inserted_element);
+}
+
+/* this function returns the "returned type" of a function */
+string getActualType(TypeContainer* some_data){
+    string type = some_data->getType();
+    if (type=="ID"){
+		notDefined(some_data);
+        type = table.getDataCopy(some_data->getName()).getTypeCopy();
+        // std::size_t location = type.find("->");
+        // if (location == std::string::npos){
+        //     return type;
+        // }
+        // type = type.substr(location+2);
+    }
+    return type;
+}
+
+void numCheck(TypeContainer* data){
+    string type = getActualType(data);
+    if (type!="INT" && type!="BYTE"){
+        errorMismatch(yylineno);
+        exit(0);
+    }
+}
+
+string getRetType(ScopeData some_func){
+    string type = some_func.getTypeCopy();
+    std::size_t location = type.find("->");
+    type = type.substr(location+2);
+    return type;
+}
+
+/* gets function name and returns the type (type1,type2,type3) */
+string getFunctionParametersString(string id){
+  ScopeData func_data = table.getDataCopy(id);
+  string type = func_data.getTypeCopy();
+  std::size_t location = type.find("->");
+  type = type.substr(0,location);
+  return type;
+}
+
+string getFunctionRetTypeString(string id){
+  ScopeData func_data = table.getDataCopy(id);
+  string RetType = func_data.getTypeCopy();
+  return getRetType(RetType);
+}
+
+
+vector<string> functionTypeToVector(string function_type) {
+  function_type = function_type.substr(0, function_type.find("->"));
+  function_type = function_type.substr(1, function_type.length() - 1);
+  std::string s = function_type;
+  std::string delimiter = ",";
+  vector<string> output_vector;
+  size_t pos = 0;
+  std::string token;
+  while ((pos = s.find(delimiter)) != std::string::npos) {
+    token = s.substr(0, pos);
+    output_vector.push_back(token);
+    s.erase(0, pos + delimiter.length());
+  }
+  return output_vector;
+}
+
+string getFunctionFullType(string id){
+    return table.getDataCopy(id).getTypeCopy();
+}
+
+vector<string> getFunctionParameters(string id){
+    string type = getFunctionFullType(id);
+    return functionTypeToVector(type);
+}
+
+void enumTypeCheck(TypeContainer* enumtype,TypeContainer* future_id,TypeContainer* exp){
+    string checked_enum = enumtype->getName();
+    string exp_type = getActualType(exp);
+    size_t pos = exp_type.find(" ");
+    if (pos==string::npos){
+      errorUndefEnum(yylineno,enumtype->getName());
+      exit(0);
+    }
+    if (exp_type.substr(pos+1)!=checked_enum){
+      errorUndefEnumValue(yylineno,future_id->getName());
+      exit(0);
+    }
+}
+
+
+vector<ScopeData> createFuncArgsVec(TypeContainer* formals){
+    vector<Id> id_vec = ((FormalListClass*)formals)->getIds();
+    vector<ScopeData> output_vec;
+    int i=-1;
+    for (Id id : id_vec){
+        output_vec.push_back(ScopeData(id.getName(),i,id.getType()));
+        i--;
+    }
+    return output_vec;
+}
+
+vector<string> parseFuncParams(string type){
+  vector<string> params;
+  string param_string = type.substr(1,type.size()-2);
+  int count = 0;
+  for(char c : param_string){
+    if(c == ',') count++;
+  }
+  int param_num = count;//(int)std::count(param_string.begin(), param_string.end(), ',');
+  int pos = 0;
+  for(int i = 0; i < param_num; i++){
+    pos = (int)type.find(",");
+    params.push_back(param_string.substr(0,pos-1));
+    param_string = param_string.substr(pos);
+  }
+  params.push_back(param_string);
+  return params;
+}
+
+string StringFromVec(vector<string> params){
+  if(params.size() == 0) return "()";
+  string temp = "(";
+  for(string param : params){
+    temp += param + ',';
+  }
+  return temp.substr(0,temp.size()-1)+')';
+}
+
+string getRetType(string type){
+  int pos = (int)type.find("->");
+  if(pos == std::string::npos){
+    return "";
+  }
+  return type.substr(pos+2,type.size()-2);
+}
