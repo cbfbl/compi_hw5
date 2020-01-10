@@ -1,8 +1,0 @@
-@g = global i32 3
-
-define i32 @main() {
-	%ptr = alloca i32
-	store i32 3, i32* %ptr
-	ret i32 42
-}
-
