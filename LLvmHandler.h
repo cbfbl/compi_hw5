@@ -17,11 +17,13 @@ class LLvmHandler {
 
   void insertFunction(TypeContainer* ret, TypeContainer* id,
                       TypeContainer* formals);
-  void finishInsertFunction();
+  void finishInsertFunction(bool no_void);
 
   void printFunctionsDefinitions();
 
   void setIdentLevel(unsigned int level);
+
+  void insertReturn(TypeContainer* ret);
 };
 
 #endif

@@ -14,6 +14,7 @@ class Handler {
   Scope& table;
   LLvmHandler llvm_handler;
   RegisterManager reg_manager;
+  bool printed_ret = false;
 
  public:
   Handler(Scope& parser_table);

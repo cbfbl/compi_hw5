@@ -17,7 +17,10 @@ void notDefinedVariable2(Scope& table, TypeContainer* con);
 void typeCheck2(Scope& table, TypeContainer* lhs, TypeContainer* rhs);
 
 Handler::Handler(Scope& parser_table)
-    : table(parser_table), last_function_ret_type(""), is_main_defined(false) {}
+    : table(parser_table),
+      last_function_ret_type(""),
+      is_main_defined(false),
+      printed_ret(false) {}
 
 void Handler::flushCode() { llvm_handler.flushCodeBuffer(); }
 
@@ -73,7 +76,12 @@ void Handler::createAndInsertFunction(TypeContainer* ret, TypeContainer* id,
   llvm_handler.insertFunction(ret, id, formals);
 }
 
-void Handler::finishInsertFunction() { llvm_handler.finishInsertFunction(); }
+void Handler::finishInsertFunction() {
+  if (!printed_ret) {
+    llvm_handler.finishInsertFunction(!printed_ret);
+  }
+  printed_ret = false;
+}
 
 TypeContainer* Handler::enumDeclaration(TypeContainer* id,
                                         TypeContainer* enum_list) {
@@ -204,6 +212,8 @@ TypeContainer* Handler::expBinopL(TypeContainer* action, TypeContainer* lhs,
 }
 
 void Handler::returnStatement(TypeContainer* exp) {
+  llvm_handler.insertReturn(exp);
+  printed_ret = true;
   if (exp == NULL) {
     if (last_function_ret_type != "VOID") {
       errorMismatch(yylineno);
