@@ -85,12 +85,14 @@ FuncDecl : RetType {
         exit(0);
       }
         handler.createAndInsertFunction($1,$3,$6);
+        handler.insertScope();
         
     } Statements RBRACE  {
 	handler.finishInsertFunction();
     //endScope();
     //table.printLastScopeData();
-    table.removeScope();
+    handler.removeScope();
+    //table.removeScope();
 };
 Enums : /*epsilon*/																		{};
 Enums : EnumDecl {
@@ -155,10 +157,14 @@ Enumerator : ID	{
 };
 Statements : Statement																{};
 Statements : Statements Statement											{};
-Statement : LBRACE {table.insertScope();} Statements RBRACE {
+Statement : LBRACE {
+    handler.insertScope();
+    //table.insertScope();
+} Statements RBRACE {
     //endScope();
     //table.printLastScopeData();
-    table.removeScope();
+    handler.removeScope();
+    //table.removeScope();
 };
 Statement : Type ID {
     wasAlreadyDefined($2);
@@ -206,19 +212,24 @@ Statement : IF LPAREN CheckType RPAREN InsertScope
 Statement : IF LPAREN CheckType RPAREN InsertScope Statement RemoveScope ELSE InsertScope Statement RemoveScope
 Statement : WHILE LPAREN CheckType RPAREN {
     while_count++;
-    table.insertScope();
+    handler.insertScope();
+    //table.insertScope();
     } Statement {
         while_count--;
         //endScope();
         //table.printLastScopeData();
-        table.removeScope();
+        handler.removeScope();
+        //table.removeScope();
 };
 InsertScope : {
-  table.insertScope();}
+    handler.insertScope();
+    //table.insertScope();
+}
 RemoveScope : {
     //endScope();
     //table.printLastScopeData();
-    table.removeScope();
+    handler.removeScope();
+    //table.removeScope();
 }
 CheckType : Exp {isBool($1);};
 Statement : BREAK SC  {

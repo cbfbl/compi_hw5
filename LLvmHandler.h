@@ -21,7 +21,9 @@ class LLvmHandler {
 
   void printFunctionsDefinitions();
 
-  void setIdentLevel(unsigned int level);
+  void increaseIdent();
+
+  void decreaseIdent();
 
   void insertReturn(TypeContainer* ret);
 };

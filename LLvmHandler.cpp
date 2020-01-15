@@ -3,7 +3,8 @@
 
 static string getLLvmType(TypeContainer* type_con);
 
-LLvmHandler::LLvmHandler() : code_buffer(CodeBuffer::instance()){};
+LLvmHandler::LLvmHandler()
+    : code_buffer(CodeBuffer::instance()), ident_level(0){};
 
 void LLvmHandler::binOpHandler(TypeContainer* action, TypeContainer* lhs,
                                TypeContainer* rhs) {
@@ -40,7 +41,7 @@ void LLvmHandler::insertFunction(TypeContainer* ret, TypeContainer* id,
     }
   }
   command += ") {";
-  code_buffer.emit(command);
+  code_buffer.emit(tabs() + command);
 }
 void LLvmHandler::finishInsertFunction(bool no_void) {
   string command = "";
@@ -74,7 +75,8 @@ void LLvmHandler::printFunctionsDefinitions() {
   code_buffer.emitGlobal(command);
 }
 
-void LLvmHandler::setIdentLevel(unsigned int level) { ident_level = level; }
+void LLvmHandler::increaseIdent() { ident_level++; }
+void LLvmHandler::decreaseIdent() { ident_level--; }
 
 string LLvmHandler::tabs() {
   string tabs = "";

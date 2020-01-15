@@ -266,6 +266,16 @@ TypeContainer* Handler::expReleq(TypeContainer* lhs, TypeContainer* rhs) {
 
 void Handler::casting() {}
 
+void Handler::insertScope() {
+  table.insertScope();
+  llvm_handler.increaseIdent();
+}
+
+void Handler::removeScope() {
+  table.removeScope();
+  llvm_handler.decreaseIdent();
+}
+
 /*
 
 problems : $1->getName() does return error if called again

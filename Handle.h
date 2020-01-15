@@ -86,6 +86,9 @@ class Handler {
   TypeContainer* expReleq(TypeContainer* lhs, TypeContainer* rhs);
 
   void casting();
+
+  void insertScope();
+  void removeScope();
 };
 
 #endif
