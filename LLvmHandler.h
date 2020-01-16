@@ -21,7 +21,8 @@ class LLvmHandler {
 
   void printFunctionsDefinitions();
 
-  void functionCall(TypeContainer* id, TypeContainer* exp_list);
+  void functionCall(string ret_type, TypeContainer* id,
+                    TypeContainer* exp_list);
 
   void increaseIdent();
 

@@ -437,7 +437,6 @@ void insertToSymbolTable(TypeContainer* type,TypeContainer* id){
 	table.addScopeData(inserted_element);
 }
 
-/* this function returns the "returned type" of a function */
 string getActualType(TypeContainer* some_data){
     string type = some_data->getType();
     if (type=="ID"){

@@ -140,7 +140,7 @@ TypeContainer* Handler::functionCall(TypeContainer* func_id,
     }
   }
   string call_type = getActualType2(table, func_id);
-  // llvm_handler.functionCall(func_id, exp_list);
+  llvm_handler.functionCall(call_type, func_id, exp_list);
   if (call_type == "INT") {
     return new Int(0, call_type);
   } else if (call_type == "BOOL") {

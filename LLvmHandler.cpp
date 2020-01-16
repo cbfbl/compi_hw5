@@ -1,7 +1,7 @@
 
 #include "LLvmHandler.h"
 
-static string getLLvmType(TypeContainer* type_con);
+static string getLLvmType(string type);
 
 LLvmHandler::LLvmHandler()
     : code_buffer(CodeBuffer::instance()), ident_level(0){};
@@ -30,7 +30,8 @@ void LLvmHandler::flushCodeBuffer() {
 
 void LLvmHandler::insertFunction(TypeContainer* ret, TypeContainer* id,
                                  TypeContainer* formals) {
-  string command = "define " + getLLvmType(ret) + " @" + id->getName() + "(";
+  string command =
+      "define " + getLLvmType(ret->getType()) + " @" + id->getName() + "(";
   vector<Id> formal_ids = ((FormalListClass*)formals)->getIds();
   auto it = formal_ids.begin();
   while (it != formal_ids.end()) {
@@ -53,7 +54,7 @@ void LLvmHandler::finishInsertFunction(bool no_void) {
 }
 
 void LLvmHandler::insertReturn(TypeContainer* ret) {
-  string type = getLLvmType(ret);
+  string type = getLLvmType(ret->getType());
   code_buffer.emit("ret " + type + "\n");
 }
 
@@ -75,9 +76,12 @@ void LLvmHandler::printFunctionsDefinitions() {
   code_buffer.emitGlobal(command);
 }
 
-void LLvmHandler::functionCall(TypeContainer* id, TypeContainer* exp_list) {
+void LLvmHandler::functionCall(string ret_type, TypeContainer* id,
+                               TypeContainer* exp_list) {
   string command = "";
-  command += "call RETTYPE @" + id->getName() + "(PARAMS)";
+  command +=
+      "call " + getLLvmType(ret_type) + " @" + id->getName() + "(PARAMS)";
+  code_buffer.emit(command);
 }
 
 void LLvmHandler::increaseIdent() { ident_level++; }
@@ -97,8 +101,7 @@ void LLvmHandler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
   code_buffer.emit(command);
 }
 
-static string getLLvmType(TypeContainer* type_con) {
-  string type = type_con->getType();
+static string getLLvmType(string type) {
   if (type == "INT" || type == "BYTE") {
     return "i32";
   }
