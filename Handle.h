@@ -89,6 +89,8 @@ class Handler {
 
   void insertScope();
   void removeScope();
+
+  void allocStackSpace(TypeContainer* type, TypeContainer* id);
 };
 
 #endif

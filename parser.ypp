@@ -169,6 +169,7 @@ Statement : LBRACE {
 Statement : Type ID {
     wasAlreadyDefined($2);
     insertToSymbolTable($1,$2);
+    handler.allocStackSpace($1,$2);
     } SC {
 };
 Statement : EnumType ID {
@@ -183,6 +184,7 @@ Statement : EnumDecl {
   ;};
 Statement : Type ID {
 	wasAlreadyDefined($2);
+    handler.allocStackSpace($1,$2);
 } ASSIGN Exp SC	{
   if($5->getType() == "ID"){
     notDefined($5);

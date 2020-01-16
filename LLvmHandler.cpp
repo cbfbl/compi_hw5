@@ -75,6 +75,11 @@ void LLvmHandler::printFunctionsDefinitions() {
   code_buffer.emitGlobal(command);
 }
 
+void LLvmHandler::functionCall(TypeContainer* id, TypeContainer* exp_list) {
+  string command = "";
+  command += "call RETTYPE @" + id->getName() + "(PARAMS)";
+}
+
 void LLvmHandler::increaseIdent() { ident_level++; }
 void LLvmHandler::decreaseIdent() { ident_level--; }
 
@@ -84,6 +89,12 @@ string LLvmHandler::tabs() {
     tabs += "\t";
   }
   return tabs;
+}
+
+void LLvmHandler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
+  string command = "";
+  command += "%" + id->getName() + " = alloca i32, align 4";
+  code_buffer.emit(command);
 }
 
 static string getLLvmType(TypeContainer* type_con) {

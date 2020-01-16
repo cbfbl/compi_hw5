@@ -77,9 +77,7 @@ void Handler::createAndInsertFunction(TypeContainer* ret, TypeContainer* id,
 }
 
 void Handler::finishInsertFunction() {
-  if (!printed_ret) {
-    llvm_handler.finishInsertFunction(!printed_ret);
-  }
+  llvm_handler.finishInsertFunction(!printed_ret);
   printed_ret = false;
 }
 
@@ -142,6 +140,7 @@ TypeContainer* Handler::functionCall(TypeContainer* func_id,
     }
   }
   string call_type = getActualType2(table, func_id);
+  // llvm_handler.functionCall(func_id, exp_list);
   if (call_type == "INT") {
     return new Int(0, call_type);
   } else if (call_type == "BOOL") {
@@ -274,6 +273,10 @@ void Handler::insertScope() {
 void Handler::removeScope() {
   table.removeScope();
   llvm_handler.decreaseIdent();
+}
+
+void Handler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
+  llvm_handler.allocStackSpace(type, id);
 }
 
 /*

@@ -21,11 +21,15 @@ class LLvmHandler {
 
   void printFunctionsDefinitions();
 
+  void functionCall(TypeContainer* id, TypeContainer* exp_list);
+
   void increaseIdent();
 
   void decreaseIdent();
 
   void insertReturn(TypeContainer* ret);
+
+  void allocStackSpace(TypeContainer* type, TypeContainer* id);
 };
 
 #endif
