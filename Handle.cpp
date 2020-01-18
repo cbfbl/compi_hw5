@@ -9,8 +9,7 @@ void notDefined2(Scope& table, TypeContainer* con);
 string getActualType2(Scope& table, TypeContainer* some_data);
 bool areTypesEqual(string type1, string type2);
 void numCheck2(Scope& table, TypeContainer* con);
-TypeContainer* binOpType2(RegisterManager& reg_manager, TypeContainer* lhs,
-                          TypeContainer* rhs);
+TypeContainer* binOpType2(TypeContainer* lhs, TypeContainer* rhs);
 void enumTypeCheck2(Scope& table, TypeContainer* enumtype, TypeContainer* id,
                     TypeContainer* exp);
 void notDefinedVariable2(Scope& table, TypeContainer* con);
@@ -174,39 +173,70 @@ TypeContainer* Handler::functionCallNoParams(TypeContainer* func_id) {
 }
 
 TypeContainer* Handler::typeInt(TypeContainer* int_type) {
-  int_type->setRegister(reg_manager.getRegister());
   return int_type;
 }
 
 TypeContainer* Handler::typeByte(TypeContainer* byte_type) {
-  byte_type->setRegister(reg_manager.getRegister());
   return byte_type;
 }
 
 TypeContainer* Handler::typeBool(TypeContainer* bool_type) {
-  bool_type->setRegister(reg_manager.getRegister());
   return bool_type;
 }
 
-TypeContainer* Handler::expBinopH(TypeContainer* action, TypeContainer* lhs,
-                                  TypeContainer* rhs) {
-  numCheck2(table, lhs);
-  numCheck2(table, rhs);
-  llvm_handler.binOpHandler(action, lhs, rhs);
-  TypeContainer* ret_val = binOpType2(reg_manager, lhs, rhs);
-  reg_manager.removeRegister(lhs->getRegister());
-  reg_manager.removeRegister(rhs->getRegister());
-  return ret_val;
+int calculateAtCompile(TypeContainer* action,
+                       TypeContainer* lhs, TypeContainer* rhs){
+  string action_type = action->getName();
+  int lhs_val = lhs->getVal();
+  int rhs_val = rhs->getVal();
+  if (action_type == "+") {
+    return lhs_val + rhs_val;
+  } else if (action_type == "-") {
+    return lhs_val - rhs_val;
+  } else if (action_type == "*") {
+    return lhs_val * rhs_val;
+  } else if (action_type == "/") {
+    if (rhs_val == 0) {
+      printf("thats some new math dividing by zero bro");
+      throw exception();
+    }
+    return lhs_val / rhs_val;
+  }
+  throw exception();
 }
 
-TypeContainer* Handler::expBinopL(TypeContainer* action, TypeContainer* lhs,
+string Handler::getRegOrValue(TypeContainer* temp){
+  string temp_str = temp->getRegister();
+  if (temp_str == "") {
+    if (temp->getType() == "ID") {
+      temp->setRegister(reg_manager.getRegister());
+      temp_str = temp->getRegister();
+    }else{
+      temp_str = std::to_string(temp->getVal());
+    }
+  }
+  return temp_str;
+}
+
+bool calculableAtCompile(TypeContainer* lhs, TypeContainer* rhs){
+  return lhs->getRegister() == "" && rhs->getRegister() == "";
+}
+
+
+TypeContainer* Handler::expBinop(TypeContainer* action, TypeContainer* lhs,
                                   TypeContainer* rhs) {
   numCheck2(table, lhs);
   numCheck2(table, rhs);
-  llvm_handler.binOpHandler(action, lhs, rhs);
-  TypeContainer* ret_val = binOpType2(reg_manager, lhs, rhs);
-  reg_manager.removeRegister(lhs->getRegister());
-  reg_manager.removeRegister(rhs->getRegister());
+  string lhs_reg_val = getRegOrValue(lhs);
+  string rhs_reg_val = getRegOrValue(rhs);
+  TypeContainer* ret_val = binOpType2(lhs, rhs);;
+  if (calculableAtCompile(lhs, rhs)) {
+    ret_val->setVal(calculateAtCompile(action, lhs, rhs));
+    return ret_val;
+  }
+  ret_val->setRegister(reg_manager.getRegister());
+  llvm_handler.binOpHandler(action, ret_val->getRegister(), lhs_reg_val,
+                            rhs_reg_val);
   return ret_val;
 }
 
@@ -234,14 +264,12 @@ void Handler::returnStatement(TypeContainer* exp) {
 }
 
 TypeContainer* Handler::expId(TypeContainer* id) {
-  id->setRegister(reg_manager.getRegister());
   return id;
 }
 
 void Handler::expCall() {}
 
 TypeContainer* Handler::expNum(TypeContainer* num) {
-  num->setRegister(reg_manager.getRegister());
   return num;
 }
 
@@ -303,17 +331,16 @@ bool areTypesEqual(string type1, string type2) {
   return false;
 }
 
-TypeContainer* binOpType2(RegisterManager& reg_manager, TypeContainer* lhs,
-                          TypeContainer* rhs) {
+TypeContainer* binOpType2(TypeContainer* lhs, TypeContainer* rhs) {
   string type_one = lhs->getType();
   string type_two = rhs->getType();
   TypeContainer* ret = NULL;
   if (type_one == "INT" || type_two == "INT") {
-    ret = new Int(lhs->getVal() + rhs->getVal(), "INT");
+    ret = new Int(0, "INT");
   } else {
-    ret = new Int(lhs->getVal() + rhs->getVal(), "BYTE");
+    ret = new Int(0, "BYTE");
   }
-  ret->setRegister(reg_manager.getRegister());
+  ret->setRegister("");
   return ret;
 }
 
@@ -389,7 +416,7 @@ void notDefinedVariable2(Scope& table, TypeContainer* con) {
 void typeCheck2(Scope& table, TypeContainer* lhs, TypeContainer* rhs) {
   string type_lhs = getActualType2(table, lhs);
   string type_rhs = getActualType2(table, rhs);
-  if (type_lhs == type_rhs || type_lhs == "INT" && type_rhs == "BYTE") {
+  if (type_lhs == type_rhs || (type_lhs == "INT" && type_rhs == "BYTE")) {
     return;
   }
   if (type_lhs.find(" ") != string::npos) {

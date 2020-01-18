@@ -25,6 +25,7 @@ class TypeContainer {
   vector<string> virtual getTypes(){};
   void virtual printContent(){};
   int virtual getVal(){};
+  void virtual setVal(int value){};
   bool virtual getValue(){};
   string virtual getName(){};
   void virtual addType(string some_type){};
@@ -38,6 +39,7 @@ class Int : public TypeContainer {
   Int(char* yytext, string type) : val(atoi(yytext)), TypeContainer(type){};
   Int(int in_val, string type) : val(in_val), TypeContainer(type){};
   int getVal() { return val; };
+  void setVal(int value) { val = value; }
 };
 
 class Byte : public TypeContainer {
@@ -46,6 +48,7 @@ class Byte : public TypeContainer {
  public:
   Byte(char* yytext, string type) : byt(atoi(yytext)), TypeContainer(type){};
   Byte(int val, string type) : byt(val), TypeContainer(type){};
+  void setVal(int value) { byt = value; }
 };
 
 class Id : public TypeContainer {

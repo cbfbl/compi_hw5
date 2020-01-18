@@ -6,10 +6,10 @@ static string getLLvmType(string type);
 LLvmHandler::LLvmHandler()
     : code_buffer(CodeBuffer::instance()), ident_level(0){};
 
-void LLvmHandler::binOpHandler(TypeContainer* action, TypeContainer* lhs,
-                               TypeContainer* rhs) {
+void LLvmHandler::binOpHandler(TypeContainer* action, string target_reg,
+                               string lhs_reg, string rhs_reg) {
   string action_type = action->getName();
-  string command = "";
+  string command = target_reg + " = ";
   if (action_type == "*") {
     command += "mul ";
   } else if (action_type == "+") {
@@ -19,9 +19,10 @@ void LLvmHandler::binOpHandler(TypeContainer* action, TypeContainer* lhs,
   } else if (action_type == "/") {
     command += "sdiv ";
   }
-  command += "i32 " + lhs->getRegister() + ", " + rhs->getRegister();
+  command += "i32 " + lhs_reg + ", " + rhs_reg;
   code_buffer.emit(command);
 }
+
 
 void LLvmHandler::flushCodeBuffer() {
   code_buffer.printGlobalBuffer();
@@ -111,4 +112,5 @@ static string getLLvmType(string type) {
   if (type == "BOOL") {
     return "i1";
   }
+  throw exception();
 }

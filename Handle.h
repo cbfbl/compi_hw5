@@ -59,13 +59,12 @@ class Handler {
 
   TypeContainer* typeBool(TypeContainer* bool_type);
 
-  TypeContainer* expBinopH(TypeContainer* action, TypeContainer* lhs,
-                           TypeContainer* rhs);
-
-  TypeContainer* expBinopL(TypeContainer* action, TypeContainer* lhs,
+  TypeContainer* expBinop(TypeContainer* action, TypeContainer* lhs,
                            TypeContainer* rhs);
 
   void returnStatement(TypeContainer* exp);
+  
+  string getRegOrValue(TypeContainer* temp);
 
   TypeContainer* expId(TypeContainer* id);
 

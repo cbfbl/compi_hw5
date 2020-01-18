@@ -11,8 +11,8 @@ class LLvmHandler {
 
  public:
   LLvmHandler();
-  void binOpHandler(TypeContainer* action, TypeContainer* lhs,
-                    TypeContainer* rhs);
+  void binOpHandler(TypeContainer* action, string target_reg,
+                    string lhs_reg, string rhs_reg);
   void flushCodeBuffer();
 
   void insertFunction(TypeContainer* ret, TypeContainer* id,

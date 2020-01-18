@@ -264,10 +264,10 @@ Type : BOOL																						{$$=handler.typeBool($1);};
 EnumType : ENUM ID																		{$$=new Enum($2->getName(),"ENUM");};
 Exp : LPAREN Exp RPAREN																{$$=$2;};
 Exp : Exp BINOPH Exp {
-    $$ = handler.expBinopH($2,$1,$3);
+    $$ = handler.expBinop($2,$1,$3);
 };
 Exp : Exp BINOPL Exp {
-    $$ = handler.expBinopL($2,$1,$3);
+    $$ = handler.expBinop($2,$1,$3);
 };
 Exp : ID																							{$$=handler.expId($1);};
 Exp : Call																						{$$=$1;};
