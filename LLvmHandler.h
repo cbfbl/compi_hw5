@@ -31,6 +31,12 @@ class LLvmHandler {
   void insertReturn(TypeContainer* ret);
 
   void allocStackSpace(TypeContainer* type, TypeContainer* id);
+
+  void load(string type,string out,string in);
+
+  void store(string type,string out,string in);
+
+  void sxt(string out,string in,string out_type,string in_type);
 };
 
 #endif

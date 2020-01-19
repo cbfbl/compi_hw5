@@ -102,6 +102,18 @@ void LLvmHandler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
   code_buffer.emit(command);
 }
 
+void LLvmHandler::load(string type,string out,string in){
+  code_buffer.emit(out + " = " + "load " + type + ", " + type + "* " + in);
+}
+
+void LLvmHandler::store(string type,string out,string in){
+  code_buffer.emit("store " + type + " " + in + ", " + type + "*" + out);
+}
+
+void LLvmHandler::sxt(string out ,string in,string out_type,string in_type){
+  code_buffer.emit(out + " + " + "zext " + in_type + " " + in + "to " +  out_type);
+}
+
 static string getLLvmType(string type) {
   if (type == "INT" || type == "BYTE") {
     return "i32";
