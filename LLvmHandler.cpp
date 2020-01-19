@@ -135,6 +135,24 @@ void LLvmHandler::cmp(string out ,string action, string cond , string type,strin
 void LLvmHandler::trunc(string out,string type_from,string in, string type_to){
   code_buffer.emit(out + " = trunc " + type_from + " " + in + " to " + type_to);
 }
+
+void LLvmHandler::call(string out,string ret_type,string name, vector<string> types,vector<string> ins){
+  string added = "";
+  string params = "(";
+  if (out != ""){
+    added = " = ";
+  }
+  for (int i=0 ; i < types.size() ; i++){
+    params+=types[i] + " " + ins[i];
+    if (i!=types.size()-1){
+      params+=", ";
+    }
+    params+=")"; 
+  }
+  code_buffer.emit(out + added + "call " + ret_type + name+params);
+
+}
+
 static string getLLvmOp(string cond){
   if (cond == "=="){
     return "eq";
