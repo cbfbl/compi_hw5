@@ -2,6 +2,7 @@
 #include "LLvmHandler.h"
 
 static string getLLvmType(string type);
+static string getLLvmOp(string cond);
 
 LLvmHandler::LLvmHandler()
     : code_buffer(CodeBuffer::instance()), ident_level(0){};
@@ -134,7 +135,7 @@ void LLvmHandler::cmp(string out ,string action, string cond , string type,strin
 void LLvmHandler::trunc(string out,string type_from,string in, string type_to){
   code_buffer.emit(out + " = trunc " + type_from + " " + in + " to " + type_to);
 }
-static string getLvvmOp(string cond){
+static string getLLvmOp(string cond){
   if (cond == "=="){
     return "eq";
   }
