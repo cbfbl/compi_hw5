@@ -114,6 +114,47 @@ void LLvmHandler::sxt(string out ,string in,string out_type,string in_type){
   code_buffer.emit(out + " + " + "zext " + in_type + " " + in + "to " +  out_type);
 }
 
+void LLvmHandler::brWithCond(string cond_loc,string true_label,string false_label){
+  code_buffer.emit("br i1 " + cond_loc + ", " + "label " + true_label + ", " + "label " + false_label);
+}
+
+void LLvmHandler::br(string jump_lbl){
+  code_buffer.emit("label " + jump_lbl);
+}
+
+void LLvmHandler::magicalPhi(string type,string out, string label1,string in1,string label2,string in2){
+  code_buffer.emit(out + " = phi " + type + "[" + in1 + ", " + label1 + "], [" + in2 + ", " + label2 + "]");
+}
+
+void LLvmHandler::cmp(string out ,string action, string cond , string type,string in1,string in2 ){
+  string actual_cond = getLLvmOp(cond);
+  code_buffer.emit(out + "icmp " + actual_cond + " " + type + " " + in1 + ", " + in2);
+}
+
+void LLvmHandler::trunc(string out,string type_from,string in, string type_to){
+  code_buffer.emit(out + " = trunc " + type_from + " " + in + " to " + type_to);
+}
+static string getLvvmOp(string cond){
+  if (cond == "=="){
+    return "eq";
+  }
+  if (cond == "!="){
+    return "ne";
+  }
+  if (cond == ">"){
+    return "sgt";
+  }
+  if (cond == ">="){
+    return "sge";
+  }
+  if (cond == "<"){
+    return "slt";
+  }
+  if (cond == "<="){
+    return "sle";
+  }
+}
+
 static string getLLvmType(string type) {
   if (type == "INT" || type == "BYTE") {
     return "i32";

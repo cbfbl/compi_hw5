@@ -37,6 +37,16 @@ class LLvmHandler {
   void store(string type,string out,string in);
 
   void sxt(string out,string in,string out_type,string in_type);
+
+  void brWithCond(string cond_loc,string true_label, string false_label);
+
+  void trunc(string out,string type_from,string in, string type_to);
+
+  void br(string jump_label);
+
+  void magicalPhi(string type,string out ,string label1,string in1,string label2,string in2);
+
+  void cmp(string out ,string action, string cond , string type,string op1,string op2 );
 };
 
 #endif
