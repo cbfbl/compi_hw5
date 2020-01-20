@@ -53,6 +53,7 @@ class Byte : public TypeContainer {
   Byte(char* yytext, string type) : byt(atoi(yytext)), TypeContainer(type){};
   Byte(int val, string type) : byt(val), TypeContainer(type){};
   void setVal(int value) { byt = value; }
+  int getVal() { return byt; };
 };
 
 class Id : public TypeContainer {

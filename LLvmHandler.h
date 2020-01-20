@@ -14,7 +14,7 @@ class LLvmHandler {
   void binOpHandler(TypeContainer* action, string target_reg,
                     string lhs_reg, string rhs_reg);
   
-  void RelOpHandler(TypeContainer* action, string target_reg,
+  void relOpHandler(TypeContainer* action, string target_reg,
                     string lhs_reg, string rhs_reg);
   
   void flushCodeBuffer();
@@ -38,15 +38,15 @@ class LLvmHandler {
 
   void storeValue(string value, string target);
   
-  void load(string type,string out,string in);
+  void load(string out,string in);
 
-  void store(string type,string out,string in);
+  void store(string out,string in);
 
-  void sxt(string out,string in,string out_type,string in_type);
+  void zext(string out,string in,string out_type,string in_type);
 
   void brWithCond(string cond_loc,string true_label, string false_label);
 
-  void trunc(string out,string type_from,string in, string type_to);
+  void trunc(string out, string in, string type_to);
 
   void br(string jump_label);
 
