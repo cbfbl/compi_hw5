@@ -224,7 +224,7 @@ string Handler::getRegOrValue(TypeContainer* temp){
       llvm_handler.load( temp_str,"%"+temp->getName());
     }
     else if (temp->getType() == "BOOL"){
-      temp_str = (temp->getValue() == true) ? "true" : "false";
+      temp_str = std::to_string(temp->getValue());
     }
     else{
       temp_str = std::to_string(temp->getVal());
