@@ -128,15 +128,19 @@ void LLvmHandler::storeValue(string value, string target) {
 }
 
 void LLvmHandler::load(string type,string out,string in){
-  code_buffer.emit(out + " = " + "load " + type + ", " + type + "* " + in);
+  string llvm_type = getLLvmType(type);
+  code_buffer.emit(out + " = " + "load " + llvm_type + ", " + llvm_type + "* " + in);
 }
 
 void LLvmHandler::store(string type,string out,string in){
-  code_buffer.emit("store " + type + " " + in + ", " + type + "*" + out);
+  string llvm_type = getLLvmType(type);
+  code_buffer.emit("store " + llvm_type + " " + in + ", " + llvm_type + "* " + out);
 }
 
 void LLvmHandler::sxt(string out ,string in,string out_type,string in_type){
-  code_buffer.emit(out + " + " + "zext " + in_type + " " + in + "to " +  out_type);
+  string llvm_in_type = getLLvmType(in_type);
+  string llvm_out_type = getLLvmType(out_type);
+  code_buffer.emit(out + " + " + "zext " + llvm_in_type + " " + in + "to " +  llvm_out_type);
 }
 
 void LLvmHandler::brWithCond(string cond_loc,string true_label,string false_label){
@@ -148,32 +152,37 @@ void LLvmHandler::br(string jump_lbl){
 }
 
 void LLvmHandler::magicalPhi(string type,string out, string label1,string in1,string label2,string in2){
-  code_buffer.emit(out + " = phi " + type + "[" + in1 + ", " + label1 + "], [" + in2 + ", " + label2 + "]");
+  string llvm_type = getLLvmType(type);
+  code_buffer.emit(out + " = phi " + llvm_type + "[" + in1 + ", " + label1 + "], [" + in2 + ", " + label2 + "]");
 }
 
 void LLvmHandler::cmp(string out , string cond , string type,string in1,string in2 ){
   string actual_cond = getLLvmOp(cond);
-  code_buffer.emit(out + "icmp " + actual_cond + " " + type + " " + in1 + ", " + in2);
+  string llvm_type = getLLvmType(type);
+  code_buffer.emit(out + "icmp " + actual_cond + " " + llvm_type + " " + in1 + ", " + in2);
 }
 
 void LLvmHandler::trunc(string out,string type_from,string in, string type_to){
-  code_buffer.emit(out + " = trunc " + type_from + " " + in + " to " + type_to);
+  string llvm_type_to = getLLvmType(type_to);
+  string llvm_type_from = getLLvmType(type_from);
+  code_buffer.emit(out + " = trunc " + llvm_type_from + " " + in + " to " + llvm_type_to);
 }
 
 void LLvmHandler::call(string out,string ret_type,string name, vector<string> types,vector<string> ins){
+  string llvm_type = getLLvmType(ret_type);
   string added = "";
   string params = "(";
   if (out != ""){
     added = " = ";
   }
   for (int i=0 ; i < types.size() ; i++){
-    params+=types[i] + " " + ins[i];
+    params+=getLLvmType(types[i]) + " " + ins[i];
     if (i!=types.size()-1){
       params+=", ";
     }
     params+=")"; 
   }
-  code_buffer.emit(out + added + "call " + ret_type + name+params);
+  code_buffer.emit(out + added + "call " + llvm_type + name+params);
 
 }
 

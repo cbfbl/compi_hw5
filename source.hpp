@@ -5,12 +5,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "bp.hpp"
 
 using std::cout;
 using std::endl;
 using std::ostream;
 using std::string;
 using std::vector;
+using std::pair;
 
 class TypeContainer {
  public:

@@ -14,6 +14,7 @@ void enumTypeCheck2(Scope& table, TypeContainer* enumtype, TypeContainer* id,
                     TypeContainer* exp);
 void notDefinedVariable2(Scope& table, TypeContainer* con);
 void typeCheck2(Scope& table, TypeContainer* lhs, TypeContainer* rhs);
+void insertToSymbolTable2(Scope& table, TypeContainer* type,TypeContainer* id);
 
 Handler::Handler(Scope& parser_table)
     : table(parser_table),
@@ -117,7 +118,7 @@ void Handler::insertEnum(TypeContainer* enumtype, TypeContainer* id,
                                "enum " + enumtype->getName()));
 }
 
-void Handler::assignWithoutDecl(TypeContainer* id, TypeContainer* exp) {
+void Handler::decWithoutAssign(TypeContainer* id, TypeContainer* exp) {
   notDefinedVariable2(table, id);
   typeCheck2(table, id, exp);
   llvm_handler.store(getActualType2(table,id),"%"+id->getName(),getRegOrValue(exp));
@@ -212,6 +213,7 @@ string Handler::getRegOrValue(TypeContainer* temp){
     if (temp->getType() == "ID") {
       temp->setRegister(reg_manager.getRegister());
       temp_str = temp->getRegister();
+      llvm_handler.load(getActualType2(table,temp), temp_str,"%"+temp->getName());
     }
     else if (temp->getType() == "BOOL"){
       temp_str = (temp->getValue() == true) ? "true" : "false";
@@ -266,6 +268,13 @@ void Handler::returnStatement(TypeContainer* exp) {
       exit(0);
     }
   }
+}
+
+void Handler::decWithAssign(TypeContainer* type, TypeContainer* id,
+                                    TypeContainer* exp){
+  typeCheck2(table, type, exp);
+  insertToSymbolTable2(table, type, id);
+  llvm_handler.store(type->getType(),"%"+id->getName(),getRegOrValue(exp));
 }
 
 TypeContainer* Handler::expId(TypeContainer* id) {
@@ -369,6 +378,12 @@ void Handler::storeValue(TypeContainer* value, TypeContainer* target) {
 //    val = table.getDataCopy(value->getName());
 //  }
 //  llvm_handler.storeValue(val, );
+}
+
+
+void insertToSymbolTable2(Scope& table, TypeContainer* type,TypeContainer* id){
+  ScopeData inserted_element = ScopeData(id->getName(),table.getNextOffset(),type->getType());
+  table.addScopeData(inserted_element);
 }
 
 /*
@@ -490,3 +505,4 @@ void typeCheck2(Scope& table, TypeContainer* lhs, TypeContainer* rhs) {
   errorMismatch(yylineno);
   exit(0);
 }
+
