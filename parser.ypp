@@ -152,9 +152,7 @@ Statement : LBRACE {
     //table.removeScope();
 };
 Statement : Type ID {
-    wasAlreadyDefined($2);
-    insertToSymbolTable($1,$2);
-    handler.allocStackSpace($1,$2);
+  handler.decWithoutAssign($1, $2);
     } SC {
 };
 Statement : EnumType ID {
@@ -174,9 +172,7 @@ Statement : Type ID {
   if($5->getType() == "ID"){
     notDefined($5);
   }
-	typeCheck($1,$5);
-  handler.storeValue($5,$2);
-  insertToSymbolTable($1,$2);
+  handler.decWithAssign($1, $2, $5);
 	};
 Statement : EnumType ID {wasAlreadyDefined($2);} ASSIGN Exp {
     if ($5->getType()=="ID"){
@@ -186,7 +182,7 @@ Statement : EnumType ID {wasAlreadyDefined($2);} ASSIGN Exp {
     } SC {
 };
 Statement : ID ASSIGN Exp SC {
-    handler.assignWithoutDecl($1,$3);
+    handler.AssignWithoutDec($1,$3);
 };
 Statement : Call SC																		{};
 Statement : RETURN SC 	{

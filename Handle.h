@@ -43,11 +43,17 @@ class Handler {
                                TypeContainer* enumrator);
 
   void insertVariable();
+  
+
 
   void insertEnum(TypeContainer* enumtype, TypeContainer* id,
                   TypeContainer* exp);
 
-  void assignWithoutDecl(TypeContainer* id, TypeContainer* exp);
+  void AssignWithoutDec(TypeContainer* id, TypeContainer* exp);
+  
+  void decWithoutAssign(TypeContainer* type, TypeContainer* id);
+  
+  void decWithAssign(TypeContainer* type, TypeContainer* id, TypeContainer* exp);
 
   TypeContainer* functionCall(TypeContainer* func_id, TypeContainer* exp_list);
 
@@ -95,7 +101,6 @@ class Handler {
   void removeScope();
 
   void allocStackSpace(TypeContainer* type, TypeContainer* id);
-  void storeValue(TypeContainer* value, TypeContainer* target);
 };
 
 #endif

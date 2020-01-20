@@ -14,6 +14,8 @@ void enumTypeCheck2(Scope& table, TypeContainer* enumtype, TypeContainer* id,
                     TypeContainer* exp);
 void notDefinedVariable2(Scope& table, TypeContainer* con);
 void typeCheck2(Scope& table, TypeContainer* lhs, TypeContainer* rhs);
+void insertToSymbolTable2(Scope& table, TypeContainer* type,TypeContainer* id);
+void wasAlreadyDefined2(Scope& table, TypeContainer* con);
 
 Handler::Handler(Scope& parser_table)
     : table(parser_table),
@@ -117,10 +119,17 @@ void Handler::insertEnum(TypeContainer* enumtype, TypeContainer* id,
                                "enum " + enumtype->getName()));
 }
 
-void Handler::assignWithoutDecl(TypeContainer* id, TypeContainer* exp) {
+void Handler::AssignWithoutDec(TypeContainer* id, TypeContainer* exp) {
   notDefinedVariable2(table, id);
   typeCheck2(table, id, exp);
-  llvm_handler.store(getActualType2(table,id),"%"+id->getName(),getRegOrValue(exp));
+  llvm_handler.store("%"+id->getName(),getRegOrValue(exp));
+}
+
+void Handler::decWithoutAssign(TypeContainer* type, TypeContainer* id) {
+  wasAlreadyDefined2(table, id);
+  insertToSymbolTable2(table,type, id);
+  allocStackSpace(type, id);
+  llvm_handler.store("%"+id->getName(),"0");
 }
 
 TypeContainer* Handler::functionCall(TypeContainer* func_id,
@@ -212,9 +221,10 @@ string Handler::getRegOrValue(TypeContainer* temp){
     if (temp->getType() == "ID") {
       temp->setRegister(reg_manager.getRegister());
       temp_str = temp->getRegister();
+      llvm_handler.load( temp_str,"%"+temp->getName());
     }
     else if (temp->getType() == "BOOL"){
-      temp_str = (temp->getValue() == true) ? "true" : "false";
+      temp_str = std::to_string(temp->getValue());
     }
     else{
       temp_str = std::to_string(temp->getVal());
@@ -242,6 +252,13 @@ TypeContainer* Handler::expBinop(TypeContainer* action, TypeContainer* lhs,
   ret_val->setRegister(reg_manager.getRegister());
   llvm_handler.binOpHandler(action, ret_val->getRegister(), lhs_reg_val,
                             rhs_reg_val);
+  if (getActualType2(table, lhs) == "BYTE" && getActualType2(table, rhs) == "BYTE") {
+    string temp_reg = reg_manager.getRegister();
+    llvm_handler.trunc(temp_reg, ret_val->getRegister(), "BYTE");
+    string temp_reg2 = reg_manager.getRegister();
+    llvm_handler.zext(temp_reg2, temp_reg, "INT", "BYTE");
+    ret_val->setRegister(temp_reg2);
+  }
   return ret_val;
 }
 
@@ -266,6 +283,18 @@ void Handler::returnStatement(TypeContainer* exp) {
       exit(0);
     }
   }
+}
+
+void Handler::decWithAssign(TypeContainer* type, TypeContainer* id,
+                                    TypeContainer* exp){
+  typeCheck2(table, type, exp);
+  insertToSymbolTable2(table, type, id);
+  if (type->getType() == "BOOL") {
+    string temp = reg_manager.getRegister();
+    llvm_handler.zext(temp , getRegOrValue(exp), "INT", getActualType2(table, exp));
+    exp->setRegister(temp);
+  }
+  llvm_handler.store("%"+id->getName(),getRegOrValue(exp));
 }
 
 TypeContainer* Handler::expId(TypeContainer* id) {
@@ -326,8 +355,8 @@ TypeContainer* Handler::expRelop(TypeContainer* action,
     return ret_val;
   }
   ret_val->setRegister(reg_manager.getRegister());
-  cout << ret_val << endl;
-//  llvm_handler.binOpHandler(action, ret_val->getRegister(), lhs_reg_val,
+  llvm_handler.cmp(ret_val->getRegister(),action->getName(),"INT",getRegOrValue(lhs),getRegOrValue(rhs));
+//  llvm_handler.relOpHandler(action, ret_val->getRegister(), lhs_reg_val,
 //                            rhs_reg_val);
   return ret_val;
 }
@@ -362,13 +391,9 @@ void Handler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
   llvm_handler.allocStackSpace(type, id);
 }
 
-void Handler::storeValue(TypeContainer* value, TypeContainer* target) {
-  string val = "0";
-  string dest = target->getName();
-//  if(value->getType() == "ID"){
-//    val = table.getDataCopy(value->getName());
-//  }
-//  llvm_handler.storeValue(val, );
+void insertToSymbolTable2(Scope& table, TypeContainer* type,TypeContainer* id){
+  ScopeData inserted_element = ScopeData(id->getName(),table.getNextOffset(),type->getType());
+  table.addScopeData(inserted_element);
 }
 
 /*
@@ -489,4 +514,11 @@ void typeCheck2(Scope& table, TypeContainer* lhs, TypeContainer* rhs) {
   }
   errorMismatch(yylineno);
   exit(0);
+}
+
+void wasAlreadyDefined2(Scope& table, TypeContainer* con){
+  if( table.exist( con->getName() )){
+    errorDef(yylineno, con->getName());
+    exit(0);
+  }
 }

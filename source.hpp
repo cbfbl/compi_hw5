@@ -5,12 +5,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "bp.hpp"
 
 using std::cout;
 using std::endl;
 using std::ostream;
 using std::string;
 using std::vector;
+using std::pair;
 
 class TypeContainer {
  public:
@@ -51,6 +53,7 @@ class Byte : public TypeContainer {
   Byte(char* yytext, string type) : byt(atoi(yytext)), TypeContainer(type){};
   Byte(int val, string type) : byt(val), TypeContainer(type){};
   void setVal(int value) { byt = value; }
+  int getVal() { return byt; };
 };
 
 class Id : public TypeContainer {

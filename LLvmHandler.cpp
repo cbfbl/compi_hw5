@@ -24,18 +24,18 @@ void LLvmHandler::binOpHandler(TypeContainer* action, string target_reg,
   code_buffer.emit(command);
 }
 
-void LLvmHandler::RelOpHandler(TypeContainer* action, string target_reg,
+void LLvmHandler::relOpHandler(TypeContainer* action, string target_reg,
                                string lhs_reg, string rhs_reg) {
   string action_type = action->getName();
   string command = target_reg + " = ";
   if (action_type == "<") {
-    command += "mul ";
+    
   } else if (action_type == ">") {
-    command += "add ";
+    
   } else if (action_type == "<=") {
-    command += "sub ";
+    
   } else if (action_type == ">=") {
-    command += "sdiv ";
+    
   }
   command += "i32 " + lhs_reg + ", " + rhs_reg;
   code_buffer.emit(command);
@@ -121,22 +121,18 @@ void LLvmHandler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
 }
 
 
-void LLvmHandler::storeValue(string value, string target) {
-  string command = "";
-  command += "store i32 " + value + ", i32* " + target + ", align 4";
-  code_buffer.emit(command);
+void LLvmHandler::load(string out,string in){
+  code_buffer.emit(out + " = " + "load i32, i32* " + in+", align 4");
 }
 
-void LLvmHandler::load(string type,string out,string in){
-  code_buffer.emit(out + " = " + "load " + type + ", " + type + "* " + in);
+void LLvmHandler::store(string out,string in){
+  code_buffer.emit("store i32 " + in + ", i32* " + out +", align 4");
 }
 
-void LLvmHandler::store(string type,string out,string in){
-  code_buffer.emit("store " + type + " " + in + ", " + type + "*" + out);
-}
-
-void LLvmHandler::sxt(string out ,string in,string out_type,string in_type){
-  code_buffer.emit(out + " + " + "zext " + in_type + " " + in + "to " +  out_type);
+void LLvmHandler::zext(string out ,string in,string out_type,string in_type){
+  string llvm_in_type = getLLvmType(in_type);
+  string llvm_out_type = getLLvmType(out_type);
+  code_buffer.emit(out + " = " + "zext " + llvm_in_type + " " + in + " to " +  llvm_out_type);
 }
 
 void LLvmHandler::brWithCond(string cond_loc,string true_label,string false_label){
@@ -148,32 +144,36 @@ void LLvmHandler::br(string jump_lbl){
 }
 
 void LLvmHandler::magicalPhi(string type,string out, string label1,string in1,string label2,string in2){
-  code_buffer.emit(out + " = phi " + type + "[" + in1 + ", " + label1 + "], [" + in2 + ", " + label2 + "]");
+  string llvm_type = getLLvmType(type);
+  code_buffer.emit(out + " = phi " + llvm_type + "[" + in1 + ", " + label1 + "], [" + in2 + ", " + label2 + "]");
 }
 
 void LLvmHandler::cmp(string out , string cond , string type,string in1,string in2 ){
   string actual_cond = getLLvmOp(cond);
-  code_buffer.emit(out + "icmp " + actual_cond + " " + type + " " + in1 + ", " + in2);
+  string llvm_type = getLLvmType(type);
+  code_buffer.emit(out + " = icmp " + actual_cond + " " + llvm_type + " " + in1 + ", " + in2);
 }
 
-void LLvmHandler::trunc(string out,string type_from,string in, string type_to){
-  code_buffer.emit(out + " = trunc " + type_from + " " + in + " to " + type_to);
+void LLvmHandler::trunc(string out, string in, string type_to){
+  string llvm_type_to = getLLvmType(type_to);
+  code_buffer.emit(out + " = trunc i32 " + in + " to " + llvm_type_to);
 }
 
 void LLvmHandler::call(string out,string ret_type,string name, vector<string> types,vector<string> ins){
+  string llvm_type = getLLvmType(ret_type);
   string added = "";
   string params = "(";
   if (out != ""){
     added = " = ";
   }
   for (int i=0 ; i < types.size() ; i++){
-    params+=types[i] + " " + ins[i];
+    params+=getLLvmType(types[i]) + " " + ins[i];
     if (i!=types.size()-1){
       params+=", ";
     }
     params+=")"; 
   }
-  code_buffer.emit(out + added + "call " + ret_type + name+params);
+  code_buffer.emit(out + added + "call " + llvm_type + name+params);
 
 }
 
@@ -208,13 +208,16 @@ static string getLLvmOp(string cond){
 }
 
 static string getLLvmType(string type) {
-  if (type == "INT" || type == "BYTE") {
+  if (type == "INT") {
     return "i32";
   }
-  if (type == "VOID") {
+  else if(type == "BYTE"){
+    return "i8";
+  }
+  else if (type == "VOID") {
     return "void";
   }
-  if (type == "BOOL") {
+  else if (type == "BOOL") {
     return "i1";
   }
   throw exception();
