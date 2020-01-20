@@ -46,7 +46,7 @@ class LLvmHandler {
 
   void magicalPhi(string type,string out ,string label1,string in1,string label2,string in2);
 
-  void cmp(string out ,string action, string cond , string type,string op1,string op2 );
+  void cmp(string out , string cond , string type,string in1,string in2 );
 
   void call(string out,string ret_type,string name, vector<string> types,vector<string> ins);
 

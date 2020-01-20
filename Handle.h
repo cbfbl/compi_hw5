@@ -82,7 +82,7 @@ class Handler {
 
   TypeContainer* expRelop(TypeContainer* lhs, TypeContainer* rhs);
 
-  TypeContainer* expReleq(TypeContainer* lhs, TypeContainer* rhs);
+  TypeContainer* expReleq(TypeContainer* action, TypeContainer* lhs, TypeContainer* rhs);
 
   void casting();
 

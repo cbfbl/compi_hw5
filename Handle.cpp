@@ -287,8 +287,12 @@ TypeContainer* Handler::expRelop(TypeContainer* lhs, TypeContainer* rhs) {
   return new Bool(true, "BOOL");
 }
 
-TypeContainer* Handler::expReleq(TypeContainer* lhs, TypeContainer* rhs) {
-  return expRelop(lhs, rhs);
+TypeContainer* Handler::expReleq(TypeContainer* action, TypeContainer* lhs, TypeContainer* rhs) {
+  string out_reg = reg_manager.getRegister();
+  llvm_handler.cmp(out_reg,action->getName(),"i32",lhs->getRegister(),rhs->getRegister());
+  TypeContainer* ret_bool = expRelop(lhs, rhs);
+  ret_bool->setRegister(out_reg);
+  return ret_bool;
 }
 
 void Handler::casting() {}

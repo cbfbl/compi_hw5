@@ -127,7 +127,7 @@ void LLvmHandler::magicalPhi(string type,string out, string label1,string in1,st
   code_buffer.emit(out + " = phi " + type + "[" + in1 + ", " + label1 + "], [" + in2 + ", " + label2 + "]");
 }
 
-void LLvmHandler::cmp(string out ,string action, string cond , string type,string in1,string in2 ){
+void LLvmHandler::cmp(string out , string cond , string type,string in1,string in2 ){
   string actual_cond = getLLvmOp(cond);
   code_buffer.emit(out + "icmp " + actual_cond + " " + type + " " + in1 + ", " + in2);
 }

@@ -16,9 +16,11 @@ class TypeContainer {
  public:
   string type;
   string reg;
+  vector<pair<int,BranchLabelIndex>> false_list;
+  vector<pair<int,BranchLabelIndex>> true_list;
   string getRegister() { return reg; };
   void setRegister(string _reg) { reg = _reg; };
-  TypeContainer(string some_type) : type(some_type), reg(""){};
+  TypeContainer(string some_type) : type(some_type), reg(""), false_list(vector<pair<int,BranchLabelIndex>>()),true_list(vector<pair<int,BranchLabelIndex>>()){};
   TypeContainer() : type("NO_TYPE"), reg(""){};
   void printData() { std::cout << type << endl; }
   string getType() { return type; };
