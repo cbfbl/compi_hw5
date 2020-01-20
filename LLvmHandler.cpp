@@ -23,6 +23,23 @@ void LLvmHandler::binOpHandler(TypeContainer* action, string target_reg,
   code_buffer.emit(command);
 }
 
+void LLvmHandler::RelOpHandler(TypeContainer* action, string target_reg,
+                               string lhs_reg, string rhs_reg) {
+  string action_type = action->getName();
+  string command = target_reg + " = ";
+  if (action_type == "<") {
+    command += "mul ";
+  } else if (action_type == ">") {
+    command += "add ";
+  } else if (action_type == "<=") {
+    command += "sub ";
+  } else if (action_type == ">=") {
+    command += "sdiv ";
+  }
+  command += "i32 " + lhs_reg + ", " + rhs_reg;
+  code_buffer.emit(command);
+}
+
 
 void LLvmHandler::flushCodeBuffer() {
   code_buffer.printGlobalBuffer();
@@ -99,6 +116,12 @@ string LLvmHandler::tabs() {
 void LLvmHandler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
   string command = "";
   command += "%" + id->getName() + " = alloca i32, align 4";
+  code_buffer.emit(command);
+}
+
+void LLvmHandler::storeValue(string value, string target) {
+  string command = "";
+  command += "store i32 " + value + ", i32* " + target + ", align 4";
   code_buffer.emit(command);
 }
 

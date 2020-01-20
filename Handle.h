@@ -80,9 +80,11 @@ class Handler {
 
   void expOr();
 
-  TypeContainer* expRelop(TypeContainer* lhs, TypeContainer* rhs);
+  TypeContainer* expRelop(TypeContainer* action,
+                          TypeContainer* lhs, TypeContainer* rhs);
 
-  TypeContainer* expReleq(TypeContainer* lhs, TypeContainer* rhs);
+  TypeContainer* expLogop(TypeContainer* action,
+                          TypeContainer* lhs, TypeContainer* rhs);
 
   void casting();
 
@@ -90,6 +92,7 @@ class Handler {
   void removeScope();
 
   void allocStackSpace(TypeContainer* type, TypeContainer* id);
+  void storeValue(TypeContainer* value, TypeContainer* target)
 };
 
 #endif
