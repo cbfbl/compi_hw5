@@ -13,6 +13,10 @@ class LLvmHandler {
   LLvmHandler();
   void binOpHandler(TypeContainer* action, string target_reg,
                     string lhs_reg, string rhs_reg);
+  
+  void RelOpHandler(TypeContainer* action, string target_reg,
+                    string lhs_reg, string rhs_reg);
+  
   void flushCodeBuffer();
 
   void insertFunction(TypeContainer* ret, TypeContainer* id,
@@ -32,6 +36,8 @@ class LLvmHandler {
 
   void allocStackSpace(TypeContainer* type, TypeContainer* id);
 
+  void storeValue(string value, string target);
+  
   void load(string type,string out,string in);
 
   void store(string type,string out,string in);

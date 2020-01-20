@@ -169,12 +169,13 @@ Statement : EnumDecl {
   ;};
 Statement : Type ID {
 	wasAlreadyDefined($2);
-    handler.allocStackSpace($1,$2);
+  handler.allocStackSpace($1,$2);
 } ASSIGN Exp SC	{
   if($5->getType() == "ID"){
     notDefined($5);
   }
 	typeCheck($1,$5);
+  handler.storeValue($5,$2);
   insertToSymbolTable($1,$2);
 	};
 Statement : EnumType ID {wasAlreadyDefined($2);} ASSIGN Exp {
@@ -282,10 +283,10 @@ Exp : Exp OR Exp {
 	$$=new Bool($1->getValue() || $3->getValue(),"BOOL");
 };
 Exp : Exp RELOP Exp  {
-    $$ = handler.expRelop($1,$3);
+    $$ = handler.expRelop($2, $1, $3);
 };
 Exp : Exp RELEQ Exp{
-    $$ = handler.expReleq($1,$3);
+    $$ = handler.expRelop($2, $1, $3);
 };
 Exp : LPAREN Type {
     if($2->getType()!="INT"){

@@ -24,6 +24,23 @@ void LLvmHandler::binOpHandler(TypeContainer* action, string target_reg,
   code_buffer.emit(command);
 }
 
+void LLvmHandler::RelOpHandler(TypeContainer* action, string target_reg,
+                               string lhs_reg, string rhs_reg) {
+  string action_type = action->getName();
+  string command = target_reg + " = ";
+  if (action_type == "<") {
+    command += "mul ";
+  } else if (action_type == ">") {
+    command += "add ";
+  } else if (action_type == "<=") {
+    command += "sub ";
+  } else if (action_type == ">=") {
+    command += "sdiv ";
+  }
+  command += "i32 " + lhs_reg + ", " + rhs_reg;
+  code_buffer.emit(command);
+}
+
 
 void LLvmHandler::flushCodeBuffer() {
   code_buffer.printGlobalBuffer();
@@ -103,6 +120,13 @@ void LLvmHandler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
   code_buffer.emit(command);
 }
 
+
+void LLvmHandler::storeValue(string value, string target) {
+  string command = "";
+  command += "store i32 " + value + ", i32* " + target + ", align 4";
+  code_buffer.emit(command);
+}
+
 void LLvmHandler::load(string type,string out,string in){
   code_buffer.emit(out + " = " + "load " + type + ", " + type + "* " + in);
 }
@@ -172,6 +196,7 @@ static string getLLvmOp(string cond){
   if (cond == "<="){
     return "sle";
   }
+  throw exception();
 }
 
 static string getLLvmType(string type) {

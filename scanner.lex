@@ -44,7 +44,7 @@ continue                        return CONTINUE;
 \{                              return LBRACE;
 \}                              return RBRACE;
 =                               return ASSIGN;
-\<|>|<=|>=                      return RELOP;
+\<|>|<=|>=                      {yylval=new RelOp(yytext,"BOOL");return RELOP;};
 ==|!=                           {yylval=new RelOp(yytext,"BOOL");return RELEQ;};
 [\*\/]                          {yylval=new BinOp(yytext,"NUM");return BINOPH;};
 [\+\-]                          {yylval=new BinOp(yytext,"NUM");return BINOPL;};

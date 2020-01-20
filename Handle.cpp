@@ -212,8 +212,11 @@ string Handler::getRegOrValue(TypeContainer* temp){
     if (temp->getType() == "ID") {
       temp->setRegister(reg_manager.getRegister());
       temp_str = temp->getRegister();
-      llvm_handler.load(getActualType2(table,temp),temp_str,"%"+temp->getName());
-    }else{
+    }
+    else if (temp->getType() == "BOOL"){
+      temp_str = (temp->getValue() == true) ? "true" : "false";
+    }
+    else{
       temp_str = std::to_string(temp->getVal());
     }
   }
@@ -283,24 +286,65 @@ void Handler::expAnd() {}
 
 void Handler::expOr() {}
 
-TypeContainer* Handler::expRelop(TypeContainer* lhs, TypeContainer* rhs) {
+TypeContainer* Handler::expLogop(TypeContainer* action,
+                                 TypeContainer* lhs, TypeContainer* rhs) {
   numCheck2(table, lhs);
   numCheck2(table, rhs);
   return new Bool(true, "BOOL");
 }
 
-TypeContainer* Handler::expReleq(TypeContainer* action, TypeContainer* lhs, TypeContainer* rhs) {
-  string out_reg = reg_manager.getRegister();
-  /*
-  if lhs is id find location on stack 
-  if lhs is saved in some reg load from the reg
-  if lhs is just number write the number
-  */
-  llvm_handler.cmp(out_reg,action->getName(),"i32",lhs->getRegister(),rhs->getRegister());
-  TypeContainer* ret_bool = expRelop(lhs, rhs);
-  ret_bool->setRegister(out_reg);
-  return ret_bool;
+bool calculateBoolAtCompile(TypeContainer* action,
+                            TypeContainer* lhs, TypeContainer* rhs){
+
+  string action_type = action->getName();
+  int lhs_val = lhs->getVal();
+  int rhs_val = rhs->getVal();
+  if (action_type == "<") {
+    return lhs_val < rhs_val;
+  } else if (action_type == ">") {
+    return lhs_val > rhs_val;
+  } else if (action_type == "<=") {
+    return lhs_val <= rhs_val;
+  } else if (action_type == ">=") {
+    return lhs_val >= rhs_val;
+  }
+  printf("unkown action");
+  throw exception();
 }
+              
+
+TypeContainer* Handler::expRelop(TypeContainer* action,
+                                 TypeContainer* lhs, TypeContainer* rhs) {
+  numCheck2(table, lhs);
+  numCheck2(table, rhs);
+  string lhs_reg_val = getRegOrValue(lhs);
+  string rhs_reg_val = getRegOrValue(rhs);
+  // TODO calc the bool exp, check which action
+  TypeContainer* ret_val = new Bool(false, "BOOL");
+  if (calculableAtCompile(lhs, rhs)) {
+    ret_val->setVal(calculateBoolAtCompile(action, lhs, rhs));
+    return ret_val;
+  }
+  ret_val->setRegister(reg_manager.getRegister());
+  cout << ret_val << endl;
+//  llvm_handler.binOpHandler(action, ret_val->getRegister(), lhs_reg_val,
+//                            rhs_reg_val);
+  return ret_val;
+}
+  
+  
+//TypeContainer* Handler::expReleq(TypeContainer* action, TypeContainer* lhs, TypeContainer* rhs) {
+//  string out_reg = reg_manager.getRegister();
+//  /*
+//  if lhs is id find location on stack
+//  if lhs is saved in some reg load from the reg
+//  if lhs is just number write the number
+//  */
+//  llvm_handler.cmp(out_reg,action->getName(),"i32",lhs->getRegister(),rhs->getRegister());
+//  TypeContainer* ret_bool = expRelop(lhs, rhs);
+//  ret_bool->setRegister(out_reg);
+//  return ret_bool;
+//}
 
 void Handler::casting() {}
 
@@ -316,6 +360,15 @@ void Handler::removeScope() {
 
 void Handler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
   llvm_handler.allocStackSpace(type, id);
+}
+
+void Handler::storeValue(TypeContainer* value, TypeContainer* target) {
+  string val = "0";
+  string dest = target->getName();
+//  if(value->getType() == "ID"){
+//    val = table.getDataCopy(value->getName());
+//  }
+//  llvm_handler.storeValue(val, );
 }
 
 /*
