@@ -120,6 +120,7 @@ void Handler::insertEnum(TypeContainer* enumtype, TypeContainer* id,
 void Handler::assignWithoutDecl(TypeContainer* id, TypeContainer* exp) {
   notDefinedVariable2(table, id);
   typeCheck2(table, id, exp);
+  llvm_handler.store(getActualType2(table,id),"%"+id->getName(),getRegOrValue(exp));
 }
 
 TypeContainer* Handler::functionCall(TypeContainer* func_id,
@@ -211,6 +212,7 @@ string Handler::getRegOrValue(TypeContainer* temp){
     if (temp->getType() == "ID") {
       temp->setRegister(reg_manager.getRegister());
       temp_str = temp->getRegister();
+      llvm_handler.load(getActualType2(table,temp),temp_str,"%"+temp->getName());
     }else{
       temp_str = std::to_string(temp->getVal());
     }
