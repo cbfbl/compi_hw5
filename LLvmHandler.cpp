@@ -2,6 +2,7 @@
 #include "LLvmHandler.h"
 
 static string getLLvmType(string type);
+static string getLLvmOp(string cond);
 
 LLvmHandler::LLvmHandler()
     : code_buffer(CodeBuffer::instance()), ident_level(0){};
@@ -119,10 +120,83 @@ void LLvmHandler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
   code_buffer.emit(command);
 }
 
+
 void LLvmHandler::storeValue(string value, string target) {
   string command = "";
   command += "store i32 " + value + ", i32* " + target + ", align 4";
   code_buffer.emit(command);
+}
+
+void LLvmHandler::load(string type,string out,string in){
+  code_buffer.emit(out + " = " + "load " + type + ", " + type + "* " + in);
+}
+
+void LLvmHandler::store(string type,string out,string in){
+  code_buffer.emit("store " + type + " " + in + ", " + type + "*" + out);
+}
+
+void LLvmHandler::sxt(string out ,string in,string out_type,string in_type){
+  code_buffer.emit(out + " + " + "zext " + in_type + " " + in + "to " +  out_type);
+}
+
+void LLvmHandler::brWithCond(string cond_loc,string true_label,string false_label){
+  code_buffer.emit("br i1 " + cond_loc + ", " + "label " + true_label + ", " + "label " + false_label);
+}
+
+void LLvmHandler::br(string jump_lbl){
+  code_buffer.emit("label " + jump_lbl);
+}
+
+void LLvmHandler::magicalPhi(string type,string out, string label1,string in1,string label2,string in2){
+  code_buffer.emit(out + " = phi " + type + "[" + in1 + ", " + label1 + "], [" + in2 + ", " + label2 + "]");
+}
+
+void LLvmHandler::cmp(string out , string cond , string type,string in1,string in2 ){
+  string actual_cond = getLLvmOp(cond);
+  code_buffer.emit(out + "icmp " + actual_cond + " " + type + " " + in1 + ", " + in2);
+}
+
+void LLvmHandler::trunc(string out,string type_from,string in, string type_to){
+  code_buffer.emit(out + " = trunc " + type_from + " " + in + " to " + type_to);
+}
+
+void LLvmHandler::call(string out,string ret_type,string name, vector<string> types,vector<string> ins){
+  string added = "";
+  string params = "(";
+  if (out != ""){
+    added = " = ";
+  }
+  for (int i=0 ; i < types.size() ; i++){
+    params+=types[i] + " " + ins[i];
+    if (i!=types.size()-1){
+      params+=", ";
+    }
+    params+=")"; 
+  }
+  code_buffer.emit(out + added + "call " + ret_type + name+params);
+
+}
+
+static string getLLvmOp(string cond){
+  if (cond == "=="){
+    return "eq";
+  }
+  if (cond == "!="){
+    return "ne";
+  }
+  if (cond == ">"){
+    return "sgt";
+  }
+  if (cond == ">="){
+    return "sge";
+  }
+  if (cond == "<"){
+    return "slt";
+  }
+  if (cond == "<="){
+    return "sle";
+  }
+  throw exception();
 }
 
 static string getLLvmType(string type) {

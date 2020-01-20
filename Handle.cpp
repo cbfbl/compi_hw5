@@ -330,6 +330,20 @@ TypeContainer* Handler::expRelop(TypeContainer* action,
 //                            rhs_reg_val);
   return ret_val;
 }
+  
+  
+//TypeContainer* Handler::expReleq(TypeContainer* action, TypeContainer* lhs, TypeContainer* rhs) {
+//  string out_reg = reg_manager.getRegister();
+//  /*
+//  if lhs is id find location on stack
+//  if lhs is saved in some reg load from the reg
+//  if lhs is just number write the number
+//  */
+//  llvm_handler.cmp(out_reg,action->getName(),"i32",lhs->getRegister(),rhs->getRegister());
+//  TypeContainer* ret_bool = expRelop(lhs, rhs);
+//  ret_bool->setRegister(out_reg);
+//  return ret_bool;
+//}
 
 void Handler::casting() {}
 
@@ -350,10 +364,10 @@ void Handler::allocStackSpace(TypeContainer* type, TypeContainer* id) {
 void Handler::storeValue(TypeContainer* value, TypeContainer* target) {
   string val = "0";
   string dest = target->getName();
-  if(value->getType() == "ID"){
-    val = table.getDataCopy(value->getName());
-  }
-  llvm_handler.storeValue(val, );
+//  if(value->getType() == "ID"){
+//    val = table.getDataCopy(value->getName());
+//  }
+//  llvm_handler.storeValue(val, );
 }
 
 /*
