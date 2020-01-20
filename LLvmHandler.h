@@ -56,6 +56,10 @@ class LLvmHandler {
 
   void call(string out,string ret_type,string name, vector<string> types,vector<string> ins);
 
+  void bit_and(string type,string out, string in1,string in2);
+
+  void bit_or(string type,string out, string in1, string in2);
+
 };
 
 #endif

@@ -177,6 +177,14 @@ void LLvmHandler::call(string out,string ret_type,string name, vector<string> ty
 
 }
 
+void LLvmHandler::bit_and(string type,string out,string in1,string in2){
+  code_buffer.emit(out + " and " + type + " " + in1 + ", " + in2);
+}
+
+void LLvmHandler::bit_or(string type,string out, string in1, string in2){
+  code_buffer.emit(out + " or " + type + " " + in1 + ", " + in2);
+}
+
 static string getLLvmOp(string cond){
   if (cond == "=="){
     return "eq";
