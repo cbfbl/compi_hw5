@@ -268,10 +268,17 @@ Exp : NOT Exp {
     isBool($2);
     $$=new Bool(!(((Bool*)$2)->getValue()),"BOOL");
 };
-Exp : Exp AND Exp {
+Exp : Exp {
+    //handler.andStart($1); create empty goto and get index
+    //if exp->getReg() br label @(will_be_replaced), @(will_be_replaced)
+  }
+  AND { 
+    // handler.andAfter($1,$3); create empty goto and backpatch with new label
+  } Exp {
 	isBool($1);
-	isBool($3);
-	$$=new Bool($1->getValue() && $3->getValue(),"BOOL");
+	isBool($5);
+	$$=new Bool($1->getValue() && $5->getValue(),"BOOL");
+  handler.expAnd($1,$5); // return new object with merged lists
 };
 Exp : Exp OR Exp {
 	isBool($1);

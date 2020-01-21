@@ -135,8 +135,8 @@ void LLvmHandler::zext(string out ,string in,string out_type,string in_type){
   code_buffer.emit(out + " = " + "zext " + llvm_in_type + " " + in + " to " +  llvm_out_type);
 }
 
-void LLvmHandler::brWithCond(string cond_loc,string true_label,string false_label){
-  code_buffer.emit("br i1 " + cond_loc + ", " + "label " + true_label + ", " + "label " + false_label);
+int LLvmHandler::brWithCond(string cond_loc,string true_label,string false_label){
+  return code_buffer.emit("br i1 " + cond_loc + ", " + "label " + true_label + ", " + "label " + false_label);
 }
 
 void LLvmHandler::br(string jump_lbl){
@@ -183,6 +183,10 @@ void LLvmHandler::bit_and(string type,string out,string in1,string in2){
 
 void LLvmHandler::bit_or(string type,string out, string in1, string in2){
   code_buffer.emit(out + " or " + type + " " + in1 + ", " + in2);
+}
+
+CodeBuffer& LLvmHandler::ilegalAction(){
+  return code_buffer;
 }
 
 static string getLLvmOp(string cond){

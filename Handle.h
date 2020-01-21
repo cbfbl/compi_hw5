@@ -82,7 +82,9 @@ class Handler {
 
   void expNot();
 
-  void expAnd();
+  TypeContainer* expAnd(TypeContainer* lhs,TypeContainer* rhs);
+  void andStart(TypeContainer* lhs);
+  void andAfter(TypeContainer* lhs,TypeContainer* rhs);
 
   void expOr();
 

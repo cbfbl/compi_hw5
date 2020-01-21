@@ -44,7 +44,7 @@ class LLvmHandler {
 
   void zext(string out,string in,string out_type,string in_type);
 
-  void brWithCond(string cond_loc,string true_label, string false_label);
+  int brWithCond(string cond_loc,string true_label, string false_label);
 
   void trunc(string out, string in, string type_to);
 
@@ -59,6 +59,8 @@ class LLvmHandler {
   void bit_and(string type,string out, string in1,string in2);
 
   void bit_or(string type,string out, string in1, string in2);
+
+  CodeBuffer& ilegalAction();
 
 };
 

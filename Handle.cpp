@@ -16,6 +16,7 @@ void notDefinedVariable2(Scope& table, TypeContainer* con);
 void typeCheck2(Scope& table, TypeContainer* lhs, TypeContainer* rhs);
 void insertToSymbolTable2(Scope& table, TypeContainer* type,TypeContainer* id);
 void wasAlreadyDefined2(Scope& table, TypeContainer* con);
+void isBool2(Scope& table,TypeContainer* con);
 
 Handler::Handler(Scope& parser_table)
     : table(parser_table),
@@ -311,14 +312,44 @@ void Handler::expNumB() {}
 
 void Handler::expNot() {}
 
-void Handler::expAnd() {}
+TypeContainer* Handler::expAnd(TypeContainer* lhs, TypeContainer* rhs) {
+  isBool2(table, lhs);
+  isBool2(table, rhs);
+  CodeBuffer& code_buffer = llvm_handler.ilegalAction();
+  int fill_loc = llvm_handler.brWithCond(rhs->getRegister(),"@","@");
+  rhs->true_list = code_buffer.merge(rhs->true_list,code_buffer.makelist(std::make_pair(fill_loc,BranchLabelIndex::FIRST)));
+  rhs->false_list = code_buffer.merge(rhs->false_list,code_buffer.makelist(std::make_pair(fill_loc,BranchLabelIndex::SECOND)));
+  const string& lbl = code_buffer.genLabel();
+  code_buffer.bpatch(rhs->true_list,lbl);
+  TypeContainer* new_bool = new Bool(lhs->getValue()&&rhs->getValue(),"BOOL");
+  new_bool->true_list = rhs->true_list;
+  new_bool->false_list = code_buffer.merge(lhs->false_list,rhs->false_list);
+  return new_bool; 
+}
+
+
+void Handler::andStart(TypeContainer* lhs){
+  CodeBuffer& code_buffer = llvm_handler.ilegalAction();
+  int fill_loc = llvm_handler.brWithCond(lhs->getRegister(),"@","@");
+  lhs->true_list = code_buffer.merge(lhs->true_list,code_buffer.makelist(std::make_pair(fill_loc,BranchLabelIndex::FIRST)));
+  lhs->false_list = code_buffer.merge(lhs->false_list,code_buffer.makelist(std::make_pair(fill_loc,BranchLabelIndex::SECOND)));
+}
+
+void Handler::andAfter(TypeContainer* lhs,TypeContainer* rhs){
+  CodeBuffer& code_buffer = llvm_handler.ilegalAction();
+  const string& lbl = code_buffer.genLabel();
+  code_buffer.bpatch(lhs->true_list,lbl);
+  int fill_loc = llvm_handler.brWithCond(rhs->getRegister(),"@","@");
+  rhs->true_list = code_buffer.merge(rhs->true_list,code_buffer.makelist(std::make_pair(fill_loc,BranchLabelIndex::FIRST)));
+  rhs->false_list = code_buffer.merge(rhs->true_list,code_buffer.makelist(std::make_pair(fill_loc,BranchLabelIndex::SECOND)));
+}
 
 void Handler::expOr() {}
 
 TypeContainer* Handler::expLogop(TypeContainer* action,
                                  TypeContainer* lhs, TypeContainer* rhs) {
-  numCheck2(table, lhs);
-  numCheck2(table, rhs);
+  isBool2(table, lhs);
+  isBool2(table, rhs);
   return new Bool(true, "BOOL");
 }
 
@@ -522,3 +553,11 @@ void wasAlreadyDefined2(Scope& table, TypeContainer* con){
     exit(0);
   }
 }
+
+void isBool2(Scope& table,TypeContainer* con){
+    string type = getActualType2(table,con);
+		if (type != "BOOL"){
+			errorMismatch(yylineno);
+			exit(0);
+		}
+ }
